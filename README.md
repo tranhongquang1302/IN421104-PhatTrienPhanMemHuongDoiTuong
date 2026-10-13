@@ -8,6 +8,18 @@
 - **Trường:** Đại học Đồng Tháp (DTHU)
 - **Môn học:** Phát triển phần mềm hướng dịch vụ
 
+## Mục tiêu học tập
+
+- Nắm vững kiến thức về phát triển phần mềm hướng dịch vụ
+- Thực hành sử dụng Git và GitHub trong quy trình phát triển phần mềm
+- Xây dựng và triển khai các ứng dụng web hiện đại
+
+## Kỹ năng
+
+- Git & GitHub
+- Làm việc nhóm
+- Phát triển phần mềm
+
 ---
 
 > *Repository này được tạo trong khuôn khổ môn học PTPMHDT.*
