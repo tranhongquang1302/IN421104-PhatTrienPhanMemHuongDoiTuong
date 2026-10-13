@@ -6,11 +6,11 @@
 - **MSSV:** 0024419387
 - **Email:** 0024419387@student.dthu.edu.vn
 - **Trường:** Đại học Đồng Tháp (DTHU)
-- **Môn học:** Phát triển phần mềm hướng dịch vụ
+- **Môn học:** Phát triển phần mềm hướng đối tượng
 
 ## Mục tiêu học tập
 
-- Nắm vững kiến thức về phát triển phần mềm hướng dịch vụ
+- Nắm vững kiến thức về phát triển phần mềm hướng đối tượng
 - Thực hành sử dụng Git và GitHub trong quy trình phát triển phần mềm
 - Xây dựng và triển khai các ứng dụng web hiện đại
 
