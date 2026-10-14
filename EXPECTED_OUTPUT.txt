@@ -1,0 +1,22 @@
+KET QUA MONG DOI (RUT GON - MINH HOA, CHUA PHAI LOG CHAY THAT)
+
+BUOC 1: Tao CLB Tri tue nhan tao
+BUOC 2: Them 3 thanh vien -> Tong thanh vien CLB: 3
+BUOC 3: Tao su kien Hoi thao AI -> Suc chua: 3
+BUOC 4: Tao 3 Registration -> Pending, Pending, Pending
+BUOC 5: Xac nhan hai phieu -> Confirmed, Confirmed, Pending
+BUOC 6: Mot CheckIn QR -> Tran Hong Quang da check-in
+BUOC 7: Bao cao tham du
+    Ten su kien: Hoi thao AI
+    So nguoi dang ky / suc chua: 3/3
+    Da check-in: 1
+    Chua check-in: 2
+    - Tran Hong Quang  | Confirmed | Da check-in
+    - Nguyen Minh Anh | Confirmed | Chua check-in
+    - Le Hoang Nam    | Pending   | Chua check-in
+BUOC 8: Kiem tra vi pham (mong doi deu bi tu choi)
+    - Them thanh vien trung: bi tu choi
+    - Check-in Pending: bi tu choi
+    - Huy phieu thu ba, roi Confirm: bi tu choi
+
+Luu y: Noi dung tren la bang doi chieu logic chu KHONG phai stdout da duoc thuc thi.
