@@ -1,6 +1,8 @@
 using EduHub.Ch02.Domain;
 using EduHub.Ch02.Logging;
 using EduHub.Ch02.Notifications;
+using EduHub.Ch02.Patterns.Observers;
+using EduHub.Ch02.Patterns.Strategies;
 using EduHub.Ch02.Repositories;
 using EduHub.Ch02.Services;
 
@@ -164,10 +166,12 @@ public class ServiceTests
         context.AddMembers(musicClub.Id, 1);
 
         // Act
-        var report = context.ReportService.Generate();
+        var report = context.ReportService.Generate(new ConsoleReportStrategy());
 
         // Assert
-        var expected = $"Club: Tech Club | Members: 2{Environment.NewLine}Club: Music Club | Members: 1";
+        var expected = "Club: Tech Club | Members: 2 | Events: 0 | Registered: 0 | CheckedIn: 0" +
+            Environment.NewLine +
+            "Club: Music Club | Members: 1 | Events: 0 | Registered: 0 | CheckedIn: 0";
         Assert.Equal(expected, report);
     }
 
@@ -202,8 +206,10 @@ public class ServiceTests
         public TestContext()
         {
             ClubService = new ClubService(Clubs, Members, Logger, Email, new[] { Email, Slack });
-            EventService = new EventService(Clubs, Members, Events, Logger, Email);
-            ReportService = new ReportService(Clubs, Members, Logger);
+            EventService = new EventService(Clubs, Events);
+            EventService.Subscribe(new LogNotifier(Logger));
+            EventService.Subscribe(new EmailNotifier(Members, Email));
+            ReportService = new ReportService(Clubs, Members, Events, Logger);
         }
 
         public Club AddClub(string name)
