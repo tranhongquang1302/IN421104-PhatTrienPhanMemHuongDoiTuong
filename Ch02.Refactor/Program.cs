@@ -1,20 +1,28 @@
-using EduHub.Ch02;
+using EduHub.Ch02.Logging;
+using EduHub.Ch02.Notifications;
+using EduHub.Ch02.Repositories;
+using EduHub.Ch02.Services;
 
-// ═══════════════════════════════════════════════════════════════
-//  EduHub Ch02 — Refactoring với SOLID và Design Patterns
-//  ClubManager.cs chứa code vi phạm SOLID (đọc các TODO ở đầu file đó).
-// ═══════════════════════════════════════════════════════════════
+// Composition root: tạo các bản cài đặt và truyền phụ thuộc qua constructor.
+IAppLogger logger = new FileLogger("club-log.txt");
 
-// Demo code cũ (vi phạm SOLID) — chạy được nhưng thiết kế rất xấu:
-var manager = new ClubManager();
-manager.CreateClub("Tech Club", "Câu lạc bộ công nghệ", "president@gmail.com");
-manager.AddMemberToClub(manager.GetAllClubs()[0].Id, "Nguyễn Văn A", "a@student.dthu.edu.vn");
-manager.CreateEvent(manager.GetAllClubs()[0].Id, "Workshop SOLID", new DateTime(2026, 11, 20));
-manager.PrintClubReport();
+// TODO (Nhiệm vụ 3): tạo các kênh thông báo bằng Factory.
+INotificationService emailNotifier = new EmailNotificationService();
+INotificationService slackNotifier = new SlackNotificationService();
 
-Console.WriteLine("\n--- TODO: refactor code trên (xem checklist trong de-bai.html) ---");
-Console.WriteLine("1. Phân tích vi phạm SOLID  ->  docs/solid-analysis.md");
-Console.WriteLine("2. Tách ClubManager thành các class nhỏ, phụ thuộc qua interface (SRP, OCP, DIP)");
-Console.WriteLine("3. Áp dụng Factory, Decorator, Strategy, Observer");
-Console.WriteLine("4. Hoàn thiện Domain và viết unit test AAA (dotnet test)");
-Console.WriteLine("5. Nhánh feature/solid-refactor, Conventional Commits, rebase, Pull Request");
+// TODO (Nhiệm vụ 3): bọc clubRepository bằng LoggingClubRepository (Decorator).
+IClubRepository clubRepository = new InMemoryClubRepository();
+IMemberRepository memberRepository = new InMemoryMemberRepository();
+IEventRepository eventRepository = new InMemoryEventRepository();
+
+IClubService clubService = new ClubService(
+    clubRepository, memberRepository, logger, emailNotifier,
+    new[] { emailNotifier, slackNotifier });
+IEventService eventService = new EventService(
+    clubRepository, memberRepository, eventRepository, logger, emailNotifier);
+IReportService reportService = new ReportService(clubRepository, memberRepository, logger);
+
+var club = clubService.CreateClub("Tech Club", "Câu lạc bộ công nghệ", "president@gmail.com");
+clubService.AddMemberToClub(club.Id, "Nguyễn Văn A", "a@student.dthu.edu.vn");
+eventService.CreateEvent(club.Id, "Workshop SOLID", new DateTime(2026, 11, 20));
+Console.WriteLine(reportService.Generate());

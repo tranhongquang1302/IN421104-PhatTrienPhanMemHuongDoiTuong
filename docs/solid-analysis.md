@@ -6,11 +6,11 @@
 
 `ClubManager` đang gộp quản lý CLB, thành viên, sự kiện, lưu dữ liệu, ghi log, gửi thông báo và xuất báo cáo. Sáu vấn đề dưới đây chỉ ra vị trí mã, nguyên lý bị vi phạm, hậu quả và hướng refactor để giữ các chức năng nghiệp vụ nhưng giảm phụ thuộc giữa chúng.
 
-Số dòng được đối chiếu với [ClubManager.cs của starter](../Ch02.Refactor/ClubManager.cs), trước khi thực hiện nhiệm vụ refactor.
+Số dòng được đối chiếu với bản mã gốc trong commit starter, qua [ClubManager.cs của starter](https://github.com/tranhongquang1302/eduhub/blob/ffb68b78e97db72a0ed8db149b849f0810337895/Ch02.Refactor/ClubManager.cs), trước khi thực hiện nhiệm vụ refactor.
 
 ## 1. CreateClub có nhiều lý do để thay đổi
 
-**Vị trí:** [dòng 35–64](../Ch02.Refactor/ClubManager.cs#L35-L64), phương thức `CreateClub`.
+**Vị trí:** [dòng 35–64](https://github.com/tranhongquang1302/eduhub/blob/ffb68b78e97db72a0ed8db149b849f0810337895/Ch02.Refactor/ClubManager.cs#L35-L64), phương thức `CreateClub`.
 
 **Nguyên lý:** SRP, Single Responsibility Principle. Một class nên có một lý do để thay đổi.
 
@@ -22,7 +22,7 @@ Phương thức vừa kiểm tra tên ở dòng 38–41, tạo và lưu CLB ở 
 
 ## 2. CreateClub lựa chọn thông báo bằng chuỗi if else
 
-**Vị trí:** [dòng 52–63](../Ch02.Refactor/ClubManager.cs#L52-L63), các nhánh kiểm tra Gmail, Yahoo và email khác.
+**Vị trí:** [dòng 52–63](https://github.com/tranhongquang1302/eduhub/blob/ffb68b78e97db72a0ed8db149b849f0810337895/Ch02.Refactor/ClubManager.cs#L52-L63), các nhánh kiểm tra Gmail, Yahoo và email khác.
 
 **Nguyên lý:** OCP, Open/Closed Principle. Thiết kế cần cho phép mở rộng hành vi mà hạn chế sửa logic đã ổn định.
 
@@ -34,7 +34,7 @@ Phương thức vừa kiểm tra tên ở dòng 38–41, tạo và lưu CLB ở 
 
 ## 3. Logic nghiệp vụ phụ thuộc trực tiếp vào ghi file
 
-**Vị trí:** [dòng 32](../Ch02.Refactor/ClubManager.cs#L32), [48](../Ch02.Refactor/ClubManager.cs#L48), [79](../Ch02.Refactor/ClubManager.cs#L79), [94](../Ch02.Refactor/ClubManager.cs#L94) và [111](../Ch02.Refactor/ClubManager.cs#L111).
+**Vị trí:** [dòng 32](https://github.com/tranhongquang1302/eduhub/blob/ffb68b78e97db72a0ed8db149b849f0810337895/Ch02.Refactor/ClubManager.cs#L32), [48](https://github.com/tranhongquang1302/eduhub/blob/ffb68b78e97db72a0ed8db149b849f0810337895/Ch02.Refactor/ClubManager.cs#L48), [79](https://github.com/tranhongquang1302/eduhub/blob/ffb68b78e97db72a0ed8db149b849f0810337895/Ch02.Refactor/ClubManager.cs#L79), [94](https://github.com/tranhongquang1302/eduhub/blob/ffb68b78e97db72a0ed8db149b849f0810337895/Ch02.Refactor/ClubManager.cs#L94) và [111](https://github.com/tranhongquang1302/eduhub/blob/ffb68b78e97db72a0ed8db149b849f0810337895/Ch02.Refactor/ClubManager.cs#L111).
 
 **Nguyên lý:** DIP, Dependency Inversion Principle. Logic cấp cao cần phụ thuộc vào abstraction thay vì chi tiết hạ tầng cụ thể.
 
@@ -46,7 +46,7 @@ Phương thức vừa kiểm tra tên ở dòng 38–41, tạo và lưu CLB ở 
 
 ## 4. AddMemberToClub cố định hai kênh thông báo
 
-**Vị trí:** [dòng 67–84](../Ch02.Refactor/ClubManager.cs#L67-L84), đặc biệt hai lệnh gửi thông báo ở dòng 82–83.
+**Vị trí:** [dòng 67–84](https://github.com/tranhongquang1302/eduhub/blob/ffb68b78e97db72a0ed8db149b849f0810337895/Ch02.Refactor/ClubManager.cs#L67-L84), đặc biệt hai lệnh gửi thông báo ở dòng 82–83.
 
 **Nguyên lý:** OCP; đồng thời việc tự gửi tin làm tăng trách nhiệm của class theo SRP.
 
@@ -58,7 +58,7 @@ Sau khi thêm thành viên, phương thức luôn thực hiện thông báo Emai
 
 ## 5. CreateEvent tự xử lý từng bên nhận thông báo
 
-**Vị trí:** [dòng 88–98](../Ch02.Refactor/ClubManager.cs#L88-L98), đặc biệt vòng lặp gửi email ở dòng 96–97.
+**Vị trí:** [dòng 88–98](https://github.com/tranhongquang1302/eduhub/blob/ffb68b78e97db72a0ed8db149b849f0810337895/Ch02.Refactor/ClubManager.cs#L88-L98), đặc biệt vòng lặp gửi email ở dòng 96–97.
 
 **Nguyên lý:** SRP và OCP.
 
@@ -70,7 +70,7 @@ Phương thức vừa tạo sự kiện, ghi log, vừa tìm thành viên của 
 
 ## 6. PrintClubReport gộp tính toán và định dạng đầu ra
 
-**Vị trí:** [dòng 103–113](../Ch02.Refactor/ClubManager.cs#L103-L113), phương thức `PrintClubReport`.
+**Vị trí:** [dòng 103–113](https://github.com/tranhongquang1302/eduhub/blob/ffb68b78e97db72a0ed8db149b849f0810337895/Ch02.Refactor/ClubManager.cs#L103-L113), phương thức `PrintClubReport`.
 
 **Nguyên lý:** SRP và OCP. Phụ thuộc ghi file ở dòng 111 cũng thuộc vấn đề DIP đã phân tích tại mục 3.
 
@@ -88,7 +88,7 @@ Khi refactor, cần thiết kế các interface nhỏ theo nhu cầu như `IClub
 
 ## Vấn đề bổ sung về đóng gói
 
-[Dòng 116](../Ch02.Refactor/ClubManager.cs#L116) trả thẳng `_clubs` qua `GetAllClubs()`. Code gọi có thể `Clear`, `Add` hoặc `Remove` trực tiếp và bỏ qua quy trình nghiệp vụ. Nên trả snapshot hoặc collection chỉ đọc qua hợp đồng truy vấn repository; cần lưu ý collection chỉ đọc vẫn có thể chứa entity có thuộc tính thay đổi được. Đây là vấn đề đóng gói cần xử lý khi refactor.
+[Dòng 116](https://github.com/tranhongquang1302/eduhub/blob/ffb68b78e97db72a0ed8db149b849f0810337895/Ch02.Refactor/ClubManager.cs#L116) trả thẳng `_clubs` qua `GetAllClubs()`. Code gọi có thể `Clear`, `Add` hoặc `Remove` trực tiếp và bỏ qua quy trình nghiệp vụ. Nên trả snapshot hoặc collection chỉ đọc qua hợp đồng truy vấn repository; cần lưu ý collection chỉ đọc vẫn có thể chứa entity có thuộc tính thay đổi được. Đây là vấn đề đóng gói cần xử lý khi refactor.
 
 ## Trách nhiệm sau refactor
 
