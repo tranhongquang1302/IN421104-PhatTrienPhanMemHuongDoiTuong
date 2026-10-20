@@ -1,5 +1,7 @@
 # EduHub Ch02 — Refactoring với SOLID và Design Patterns
 
+**Repository môn học:** [IN421104-PhatTrienPhanMemHuongDoiTuong](https://github.com/tranhongquang1302/IN421104-PhatTrienPhanMemHuongDoiTuong).
+
 Dự án đã hoàn thành phân tích SOLID, tách `ClubManager` thành các thành phần theo trách nhiệm và áp dụng Factory, Decorator, Strategy, Observer. Các service nhận phụ thuộc qua interface; `Program.cs` ráp các thành phần và minh họa cả bốn pattern.
 
 ## Cấu trúc sau refactor
