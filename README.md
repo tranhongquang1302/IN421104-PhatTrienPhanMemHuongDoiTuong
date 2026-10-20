@@ -1,5 +1,7 @@
 # EduHub
 
+**Repository môn học:** [IN421104-PhatTrienPhanMemHuongDoiTuong](https://github.com/tranhongquang1302/IN421104-PhatTrienPhanMemHuongDoiTuong).
+
 EduHub là ứng dụng minh họa quản lý câu lạc bộ, đăng ký sự kiện và điểm danh sinh viên bằng C# / .NET 10.
 
 ## Giới thiệu bản thân
@@ -25,7 +27,7 @@ EduHub là ứng dụng minh họa quản lý câu lạc bộ, đăng ký sự k
 ## Cấu trúc dự án
 
 ```text
-eduhub/
+IN421104-PhatTrienPhanMemHuongDoiTuong/
 ├── EduHub.Domain/       # Entity và quy tắc nghiệp vụ
 ├── EduHub.Console/      # Ứng dụng Console Demo
 ├── docs/
