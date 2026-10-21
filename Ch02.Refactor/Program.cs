@@ -27,11 +27,15 @@ IReportService reportService = new ReportService(
 
 Console.WriteLine("== 1. Decorator: tạo CLB và thành viên ==");
 var club = clubService.CreateClub("Tech Club", "Câu lạc bộ công nghệ", "president@gmail.com");
-clubService.AddMemberToClub(club.Id, "Nguyễn Văn A", "a@student.dthu.edu.vn");
-clubService.AddMemberToClub(club.Id, "Trần Văn B", "b@student.dthu.edu.vn");
+var firstMember = clubService.AddMemberToClub(club.Id, "Nguyễn Văn A", "a@student.dthu.edu.vn");
+var secondMember = clubService.AddMemberToClub(club.Id, "Trần Văn B", "b@student.dthu.edu.vn");
 
 Console.WriteLine("\n== 2. Observer: tạo sự kiện, ghi log và gửi email ==");
-eventService.CreateEvent(club.Id, "Workshop SOLID", new DateTime(2026, 11, 20));
+var ev = eventService.CreateEvent(club.Id, "Workshop SOLID", new DateTime(2026, 11, 20));
+ev.Register(firstMember.Id);
+ev.Register(secondMember.Id);
+ev.CheckIn(firstMember.Id);
+Console.WriteLine($"Registered: {ev.RegisteredMemberIds.Count} | CheckedIn: {ev.CheckedInMemberIds.Count}");
 
 Console.WriteLine("\n== 3. Strategy: xuất cùng số liệu theo Console và CSV ==");
 foreach (IReportStrategy strategy in new IReportStrategy[]

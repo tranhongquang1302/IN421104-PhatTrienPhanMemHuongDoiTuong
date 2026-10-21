@@ -3,24 +3,24 @@ namespace EduHub.Ch02.Domain;
 /// <summary>Sự kiện của CLB, kèm danh sách đăng ký và check-in.</summary>
 public class Event
 {
+    private readonly HashSet<Guid> _registeredMemberIds = new();
+    private readonly HashSet<Guid> _checkedInMemberIds = new();
+
     public Guid Id { get; set; }
     public Guid ClubId { get; set; }
     public required string Title { get; set; }
     public DateTime Date { get; set; }
 
-    public HashSet<Guid> RegisteredMemberIds { get; } = new();
-    public HashSet<Guid> CheckedInMemberIds { get; } = new();
+    public IReadOnlyCollection<Guid> RegisteredMemberIds => _registeredMemberIds.ToArray();
+    public IReadOnlyCollection<Guid> CheckedInMemberIds => _checkedInMemberIds.ToArray();
 
-    // TODO (Nhiệm vụ 4): đăng ký tham dự; trả về false nếu thành viên đã đăng ký trước đó.
-    public bool Register(Guid memberId)
-    {
-        throw new NotImplementedException();
-    }
+    public bool Register(Guid memberId) => _registeredMemberIds.Add(memberId);
 
-    // TODO (Nhiệm vụ 4): chỉ thành viên đã đăng ký mới được check-in,
-    // ngược lại ném InvalidOperationException.
     public void CheckIn(Guid memberId)
     {
-        throw new NotImplementedException();
+        if (!_registeredMemberIds.Contains(memberId))
+            throw new InvalidOperationException("Member must register before check-in");
+
+        _checkedInMemberIds.Add(memberId);
     }
 }

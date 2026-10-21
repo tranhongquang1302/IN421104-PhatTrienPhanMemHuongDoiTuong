@@ -2,13 +2,13 @@
 
 **Repository môn học:** [IN421104-PhatTrienPhanMemHuongDoiTuong](https://github.com/tranhongquang1302/IN421104-PhatTrienPhanMemHuongDoiTuong).
 
-Dự án đã hoàn thành phân tích SOLID, tách `ClubManager` thành các thành phần theo trách nhiệm và áp dụng Factory, Decorator, Strategy, Observer. Các service nhận phụ thuộc qua interface; `Program.cs` ráp các thành phần và minh họa cả bốn pattern.
+Dự án đã hoàn thành phân tích SOLID, refactor theo trách nhiệm, áp dụng Factory, Decorator, Strategy, Observer và hoàn thiện nghiệp vụ Domain cùng các unit test Arrange–Act–Assert. Các service nhận phụ thuộc qua interface; `Program.cs` ráp các thành phần và minh họa cả bốn pattern.
 
 ## Cấu trúc sau refactor
 
 | Thành phần | Trách nhiệm |
 |---|---|
-| `Ch02.Refactor/Domain/` | Entity; `Club.Create` kiểm tra tên và `Club.HasRoom` kiểm tra sức chứa. |
+| `Ch02.Refactor/Domain/` | `Club` kiểm tra tên, sức chứa; `Event` quản lý đăng ký và check-in theo quy tắc nghiệp vụ. |
 | `Ch02.Refactor/Services/` | `ClubService`, `EventService`, `ReportService` cùng các interface điều phối từng nghiệp vụ. |
 | `Ch02.Refactor/Repositories/` | Các hợp đồng lưu trữ CLB, thành viên, sự kiện và bản cài đặt trong bộ nhớ. Kết quả truy vấn là snapshot. |
 | `Ch02.Refactor/Logging/` | `IAppLogger`, `ConsoleLogger`, `FileLogger`; demo hiển thị log trên Console. |
@@ -18,8 +18,12 @@ Dự án đã hoàn thành phân tích SOLID, tách `ClubManager` thành các th
 | `Ch02.Refactor/Program.cs` | Composition root và demo tạo CLB, thêm thành viên, tạo sự kiện, xuất báo cáo. |
 | `Ch02.Refactor.Tests/ServiceTests.cs` | Test nghiệp vụ với repository trong bộ nhớ, logger và notifier giả. |
 | `Ch02.Refactor.Tests/PatternTests.cs` | Test cho cả bốn pattern, gồm CSV có ký tự đặc biệt và vòng đời đăng ký observer. |
+| `Ch02.Refactor.Tests/Domain/ClubTests.cs` | Test tên hợp lệ/không hợp lệ, ID và các biên sức chứa của CLB. |
+| `Ch02.Refactor.Tests/Domain/EventTests.cs` | Test đăng ký, chống trùng và điều kiện check-in của từng sự kiện. |
 
 Tên CLB bắt buộc và tối đa 100 ký tự; mỗi CLB tối đa 50 thành viên. Thêm thành viên hoặc tạo sự kiện với CLB không tồn tại phải báo lỗi. Khi thêm thành viên, các kênh thông báo được chọn ở composition root; khi tạo sự kiện, chỉ thành viên thuộc CLB đó nhận tin.
+
+`Event.Register` trả về `true` khi đăng ký mới và `false` khi trùng thành viên. `Event.CheckIn` chỉ chấp nhận thành viên đã đăng ký chính sự kiện đó; trường hợp khác ném `InvalidOperationException`. Check-in lặp lại giữ một lượt tham dự. Các tập ID nằm trong field riêng và chỉ được đọc qua snapshot, để code gọi sử dụng `Register`/`CheckIn` khi thay đổi trạng thái.
 
 ## Bốn Design Pattern
 
@@ -44,16 +48,18 @@ dotnet test Ch02.Refactor.sln
 dotnet run --project Ch02.Refactor
 ```
 
-Demo có bốn phần: Decorator khi tạo CLB, Observer khi tạo sự kiện, Strategy với hai định dạng báo cáo và Factory với đủ ba kênh thông báo.
+Demo có bốn phần: Decorator khi tạo CLB, Observer khi tạo sự kiện, Strategy với hai định dạng báo cáo và Factory với đủ ba kênh thông báo. Hai thành viên được đăng ký sự kiện và một người check-in; cả báo cáo Console lẫn CSV hiển thị số liệu `Members=2`, `Events=1`, `Registered=2`, `CheckedIn=1`.
 
-Các test service kiểm tra giới hạn 49/50 thành viên, lỗi dữ liệu đầu vào, CLB không tồn tại, phạm vi người nhận thông báo, số liệu báo cáo và snapshot truy vấn. Các test pattern kiểm tra chọn kênh, hợp đồng repository, định dạng CSV, thay strategy và đăng ký/hủy observer. Sáu test Domain có `Skip` vẫn là các bài cần hoàn thiện ở nhiệm vụ 4.
+Các test service kiểm tra giới hạn 49/50 thành viên, lỗi dữ liệu đầu vào, CLB không tồn tại, phạm vi người nhận thông báo, số liệu báo cáo và snapshot truy vấn. Các test pattern kiểm tra chọn kênh, hợp đồng repository, định dạng CSV, thay strategy và đăng ký/hủy observer.
+
+Các test Domain chia theo `ClubTests` và `EventTests`, mỗi test có ba phần Arrange, Act, Assert. Các trường hợp kiểm tra gồm tên null/rỗng/toàn khoảng trắng, tên dài 100/101 ký tự, sức chứa 0/49/50/51, đăng ký trùng và check-in chưa đăng ký hoặc chỉ đăng ký sự kiện khác. Toàn bộ test được thực thi, không còn placeholder `Skip`.
 
 ## Tiến độ bài tập
 
 - [x] Nhiệm vụ 1: [phân tích SOLID](docs/solid-analysis.md), gồm 6 vấn đề với vị trí mã, hậu quả và đề xuất sửa.
 - [x] Nhiệm vụ 2: tách class theo trách nhiệm và truyền phụ thuộc qua interface, constructor.
 - [x] Nhiệm vụ 3: Factory, Decorator, Strategy, Observer; có demo và test cho cả bốn pattern.
-- [ ] Nhiệm vụ 4: hoàn thiện `Event.Register`, `Event.CheckIn` và các test Domain theo Arrange–Act–Assert.
+- [x] Nhiệm vụ 4: hoàn thiện `Event.Register`, `Event.CheckIn` và các test Domain theo Arrange–Act–Assert, gồm cả trường hợp lỗi và giá trị biên.
 - [ ] Nhiệm vụ 5: đủ ít nhất 5 commit có ý nghĩa, rebase lên `main`, mở Pull Request và có ít nhất 2 nhận xét tự review.
 
 ## Nộp bài

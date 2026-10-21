@@ -145,11 +145,12 @@ public class PatternTests
         var firstEvent = AddEvent(events, techClub.Id, "Workshop");
         var secondEvent = AddEvent(events, techClub.Id, "Meetup");
         var musicEvent = AddEvent(events, musicClub.Id, "Concert");
-        firstEvent.RegisteredMemberIds.UnionWith(new[] { firstMember.Id, secondMember.Id });
-        firstEvent.CheckedInMemberIds.Add(firstMember.Id);
-        secondEvent.RegisteredMemberIds.Add(firstMember.Id);
-        musicEvent.RegisteredMemberIds.Add(musicMember.Id);
-        musicEvent.CheckedInMemberIds.Add(musicMember.Id);
+        firstEvent.Register(firstMember.Id);
+        firstEvent.Register(secondMember.Id);
+        firstEvent.CheckIn(firstMember.Id);
+        secondEvent.Register(firstMember.Id);
+        musicEvent.Register(musicMember.Id);
+        musicEvent.CheckIn(musicMember.Id);
         IReportService service = new ReportService(clubs, members, events, new RecordingLogger());
         var strategy = new CapturingStrategy();
 
