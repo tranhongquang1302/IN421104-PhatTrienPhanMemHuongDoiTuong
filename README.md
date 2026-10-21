@@ -64,8 +64,6 @@ Các test Domain chia theo `ClubTests` và `EventTests`, mỗi test có ba phầ
 - [x] Nhiệm vụ 4: hoàn thiện `Event.Register`, `Event.CheckIn` và các test Domain theo Arrange–Act–Assert, gồm cả trường hợp lỗi và giá trị biên.
 - [x] Nhiệm vụ 5: đủ ít nhất 5 commit có ý nghĩa, đã rebase lên `main`; [Pull Request #3](https://github.com/tranhongquang1302/IN421104-PhatTrienPhanMemHuongDoiTuong/pull/3) có mô tả What, Why, How to test và hai nhận xét tự review.
 
-Hai nhận xét tự review: [xử lý CSV](https://github.com/tranhongquang1302/IN421104-PhatTrienPhanMemHuongDoiTuong/pull/3#discussion_r4335996377) và [vòng đời Observer](https://github.com/tranhongquang1302/IN421104-PhatTrienPhanMemHuongDoiTuong/pull/3#discussion_r4335996384).
-
 ## Nộp bài
 
 Làm trên nhánh `ch02_0024419387_feature/solid-refactor`, commit theo Conventional Commits, rebase lên `main` rồi mở Pull Request với mô tả What, Why, How to test. Nộp link Pull Request theo hướng dẫn trên LMS.
