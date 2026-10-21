@@ -23,6 +23,8 @@ Dự án đã hoàn thành phân tích SOLID, refactor theo trách nhiệm, áp 
 
 Tên CLB bắt buộc và tối đa 100 ký tự; mỗi CLB tối đa 50 thành viên. Thêm thành viên hoặc tạo sự kiện với CLB không tồn tại phải báo lỗi. Khi thêm thành viên, các kênh thông báo được chọn ở composition root; khi tạo sự kiện, chỉ thành viên thuộc CLB đó nhận tin.
 
+`Member.ClubId` chỉ được gán lúc khởi tạo bằng `init`. Code gọi không thể đổi CLB trực tiếp trên thành viên đã được service trả về để bỏ qua kiểm tra giới hạn 50 người.
+
 `Event.Register` trả về `true` khi đăng ký mới và `false` khi trùng thành viên. `Event.CheckIn` chỉ chấp nhận thành viên đã đăng ký chính sự kiện đó; trường hợp khác ném `InvalidOperationException`. Check-in lặp lại giữ một lượt tham dự. Các tập ID nằm trong field riêng và chỉ được đọc qua snapshot, để code gọi sử dụng `Register`/`CheckIn` khi thay đổi trạng thái.
 
 ## Bốn Design Pattern
@@ -60,7 +62,9 @@ Các test Domain chia theo `ClubTests` và `EventTests`, mỗi test có ba phầ
 - [x] Nhiệm vụ 2: tách class theo trách nhiệm và truyền phụ thuộc qua interface, constructor.
 - [x] Nhiệm vụ 3: Factory, Decorator, Strategy, Observer; có demo và test cho cả bốn pattern.
 - [x] Nhiệm vụ 4: hoàn thiện `Event.Register`, `Event.CheckIn` và các test Domain theo Arrange–Act–Assert, gồm cả trường hợp lỗi và giá trị biên.
-- [ ] Nhiệm vụ 5: đủ ít nhất 5 commit có ý nghĩa, rebase lên `main`, mở Pull Request và có ít nhất 2 nhận xét tự review.
+- [x] Nhiệm vụ 5: đủ ít nhất 5 commit có ý nghĩa, đã rebase lên `main`; [Pull Request #3](https://github.com/tranhongquang1302/IN421104-PhatTrienPhanMemHuongDoiTuong/pull/3) có mô tả What, Why, How to test và hai nhận xét tự review.
+
+Hai nhận xét tự review: [xử lý CSV](https://github.com/tranhongquang1302/IN421104-PhatTrienPhanMemHuongDoiTuong/pull/3#discussion_r4335996377) và [vòng đời Observer](https://github.com/tranhongquang1302/IN421104-PhatTrienPhanMemHuongDoiTuong/pull/3#discussion_r4335996384).
 
 ## Nộp bài
 
