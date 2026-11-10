@@ -1,4 +1,5 @@
 using EduHub.Application.Clubs;
+using EduHub.Application.Members;
 using EduHub.Domain.Interfaces;
 using EduHub.Infrastructure.Repositories;
 
@@ -17,6 +18,12 @@ builder.Services.AddScoped<GetClubsQueryHandler>();
 builder.Services.AddScoped<GetClubByIdQueryHandler>();
 builder.Services.AddScoped<CreateClubCommandHandler>();
 builder.Services.AddScoped<DeleteClubCommandHandler>();
+
+// Đăng ký Member handlers
+builder.Services.AddScoped<GetMembersQueryHandler>();
+builder.Services.AddScoped<GetMemberByIdQueryHandler>();
+builder.Services.AddScoped<CreateMemberCommandHandler>();
+builder.Services.AddScoped<DeleteMemberCommandHandler>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
