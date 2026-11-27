@@ -1,6 +1,7 @@
 using EduHub.Application.Abstractions;
 using EduHub.Application.Auth;
 using EduHub.Domain.Entities;
+using Moq;
 
 namespace EduHub.Tests.Support;
 
@@ -52,4 +53,34 @@ public static class TestAccounts
     public static Account Member(string email = "an@eduhub.local") => new(
         Guid.NewGuid(), email, "An", "salt:hash",
         [Roles.Member], [new UserClaim(AppClaims.Permission, AppClaims.QrIssue)]);
+}
+
+internal sealed class TestAuth
+{
+    public static readonly DateTimeOffset Start = new(2026, 10, 12, 8, 0, 0, TimeSpan.Zero);
+    public Account Member { get; } = TestAccounts.Member();
+    public ManualClock Clock { get; } = new(Start);
+    public InMemoryRefreshTokenStore Store { get; } = new();
+    public LoginCommandHandler Login { get; }
+    public RefreshCommandHandler Refresh { get; }
+
+    public TestAuth(bool passwordMatches = true)
+    {
+        var accounts = new Mock<IAccountRepository>();
+        accounts.Setup(r => r.FindByEmailAsync(Member.Email, It.IsAny<CancellationToken>())).ReturnsAsync(Member);
+        accounts.Setup(r => r.FindByIdAsync(Member.Id, It.IsAny<CancellationToken>())).ReturnsAsync(Member);
+
+        var passwords = new Mock<IPasswordHasher>();
+        passwords.Setup(h => h.Verify("Member@123", Member.PasswordHash)).Returns(passwordMatches);
+
+        var tokens = new Mock<ITokenService>();
+        tokens.SetupGet(s => s.ExpiresInSeconds).Returns(3600);
+        tokens.SetupGet(s => s.RefreshTokenDays).Returns(7);
+        tokens.Setup(s => s.GenerateAccessToken(Member)).Returns("jwt-token");
+
+        Login = new(accounts.Object, passwords.Object, tokens.Object, Store, Clock);
+        Refresh = new(accounts.Object, tokens.Object, Store, Clock);
+    }
+
+    public Task<LoginResult> SignInAsync() => Login.HandleAsync(new(Member.Email, "Member@123"));
 }
