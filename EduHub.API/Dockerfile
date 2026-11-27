@@ -1,6 +1,5 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-COPY Directory.Build.props .
 COPY EduHub.Domain/EduHub.Domain.csproj EduHub.Domain/
 COPY EduHub.Application/EduHub.Application.csproj EduHub.Application/
 COPY EduHub.Infrastructure/EduHub.Infrastructure.csproj EduHub.Infrastructure/

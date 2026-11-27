@@ -1,3 +1,4 @@
+using EduHub.API.Middleware;
 using EduHub.Application.Clubs;
 using EduHub.Application.Events;
 using EduHub.Application.Registrations;
@@ -11,15 +12,23 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// TODO [Nhiệm vụ 6] Serilog: builder.Host.UseSerilog((ctx, cfg) => cfg.ReadFrom.Configuration(ctx.Configuration).Enrich.FromLogContext());
-//  và bổ sung mục "Serilog" (MinimumLevel, WriteTo Console) trong appsettings.json.
+builder.Host.UseSerilog((context, log) => log
+    .ReadFrom.Configuration(context.Configuration)
+    .Enrich.FromLogContext());
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// TODO [Nhiệm vụ 6] builder.Services.AddProblemDetails();
-//                   builder.Services.AddExceptionHandler<GlobalExceptionHandler>();  (cần using EduHub.API.Middleware)
+builder.Services.AddProblemDetails(options =>
+{
+    options.CustomizeProblemDetails = context =>
+    {
+        context.ProblemDetails.Instance ??= context.HttpContext.Request.Path;
+        context.ProblemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
+    };
+});
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<EduHubDbContext>(options => options.UseNpgsql(connectionString));
@@ -50,8 +59,17 @@ if (app.Configuration.GetValue<bool>("Database:AutoMigrate"))
     await db.SeedAsync(ct);
 }
 
-// TODO [Nhiệm vụ 6] app.UseSerilogRequestLogging();  rồi  app.UseExceptionHandler();  rồi  app.UseStatusCodePages();
-//  (thứ tự này để log request thấy đúng mã trạng thái sau khi lỗi được đổi thành ProblemDetails)
+app.UseSerilogRequestLogging(options =>
+{
+    options.EnrichDiagnosticContext = (diagnostics, context) =>
+        diagnostics.Set("TraceId", context.TraceIdentifier);
+});
+app.UseExceptionHandler();
+app.UseStatusCodePages(context => Results.Problem(
+    statusCode: context.HttpContext.Response.StatusCode,
+    instance: context.HttpContext.Request.Path,
+    extensions: new Dictionary<string, object?> { ["traceId"] = context.HttpContext.TraceIdentifier })
+    .ExecuteAsync(context.HttpContext));
 
 app.UseSwagger();
 app.UseSwaggerUI();
