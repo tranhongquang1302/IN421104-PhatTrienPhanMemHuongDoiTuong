@@ -1,4 +1,3 @@
-using System.Text;
 using System.Threading.RateLimiting;
 using EduHub.API.Security;
 using EduHub.Application.Abstractions;
@@ -15,12 +14,13 @@ using IPasswordHasher = EduHub.Application.Auth.IPasswordHasher;   // tránh tr�
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Secret đọc từ user-secrets / biến môi trường — KHÔNG ghi vào appsettings.json
 var jwt = builder.Configuration.GetSection("JwtSettings");
-var secret = jwt["Secret"];
-if (string.IsNullOrEmpty(secret) || Encoding.UTF8.GetByteCount(secret) < 32)
-    throw new InvalidOperationException(
-        "Thiếu JwtSettings:Secret (>= 32 bytes). Chạy: dotnet user-secrets set \"JwtSettings:Secret\" \"<chuỗi ngẫu nhiên dài>\" --project EduHub.API");
+var signingKey = JwtTokenService.ReadSigningKey(builder.Configuration);
+var clock = TimeProvider.System;
+var qrTokens = new QrTokenService(builder.Configuration, clock);
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+    throw new InvalidOperationException("Cấu hình ConnectionStrings:DefaultConnection qua user-secrets hoặc biến môi trường.");
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -42,19 +42,25 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.AddDbContext<EduHubDbContext>(o =>
-    o.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<EduHubDbContext>(o => o.UseNpgsql(connectionString));
 
-// --- ASP.NET Core Identity: người dùng, vai trò, claim (lưu bằng EF Core) ---
-// TODO 3.10: builder.Services.AddIdentityCore<AppUser>(...).AddRoles<AppRole>().AddEntityFrameworkStores<EduHubDbContext>()
-//            Luật mật khẩu: tối thiểu 8 ký tự, có chữ hoa, có chữ số; email không được trùng.
+builder.Services.AddIdentityCore<AppUser>(o =>
+{
+    o.User.RequireUniqueEmail = true;
+    o.Password.RequiredLength = 8;
+    o.Password.RequireUppercase = true;
+    o.Password.RequireDigit = true;
+    o.Password.RequireLowercase = false;
+    o.Password.RequireNonAlphanumeric = false;
+})
+    .AddRoles<AppRole>()
+    .AddEntityFrameworkStores<EduHubDbContext>();
 
-builder.Services.AddSingleton(TimeProvider.System);
-// TODO 1.7: đăng ký IPasswordHasher -> Argon2PasswordHasher (Singleton)
-// TODO 1.8: thay hasher mặc định (PBKDF2) của Identity bằng Argon2id:
-//           IPasswordHasher<AppUser> -> IdentityArgon2Hasher (Scoped, đăng ký SAU AddIdentityCore)
+builder.Services.AddSingleton(clock);
+builder.Services.AddSingleton<IPasswordHasher, Argon2PasswordHasher>();
+builder.Services.AddScoped<IPasswordHasher<AppUser>, IdentityArgon2Hasher>();
 builder.Services.AddSingleton<ITokenService, JwtTokenService>();
-builder.Services.AddSingleton<IQrTokenService, QrTokenService>();
+builder.Services.AddSingleton<IQrTokenService>(qrTokens);
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
 builder.Services.AddScoped<ICheckInRepository, CheckInRepository>();
@@ -62,14 +68,34 @@ builder.Services.AddScoped<LoginCommandHandler>();
 builder.Services.AddScoped<RefreshCommandHandler>();
 builder.Services.AddScoped<CheckInService>();
 
-// TODO 2.14: AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(opts => { ... })
-//   - opts.MapInboundClaims = false (giữ tên claim ngắn: sub, email, role)
-//   - TokenValidationParameters: kiểm tra Issuer, Audience, Lifetime, chữ ký (SymmetricSecurityKey từ `secret`)
-//   - ClockSkew = TimeSpan.Zero; NameClaimType = "sub"; RoleClaimType = "role"
-// TODO 3.11: builder.Services.AddAuthorization(Policies.Configure);
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(o =>
+{
+    o.MapInboundClaims = false;
+    o.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = jwt["Issuer"],
+        ValidateAudience = true,
+        ValidAudience = jwt["Audience"],
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = signingKey,
+        ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
+        ClockSkew = TimeSpan.Zero,
+        NameClaimType = "sub",
+        RoleClaimType = "role"
+    };
+});
+builder.Services.AddAuthorization(Policies.Configure);
 
-// TODO 5.1: CORS — AddCors với policy tên "EduHubWeb": chỉ cho origin trong Cors:AllowedOrigins,
-//           method GET/POST/DELETE, header Authorization và Content-Type (KHÔNG dùng AllowAnyOrigin)
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+if (corsOrigins.Contains("*"))
+    throw new InvalidOperationException("Cors:AllowedOrigins phải liệt kê origin cụ thể.");
+builder.Services.AddCors(o => o.AddPolicy("EduHubWeb", p => p
+    .WithOrigins(corsOrigins)
+    .WithMethods("GET", "POST", "DELETE")
+    .WithHeaders("Authorization", "Content-Type")));
+builder.Services.AddHttpsRedirection(o => o.HttpsPort = builder.Configuration.GetValue<int?>("HTTPS_PORT") ?? 443);
 
 // --- Rate limiting: chống dò mật khẩu và thử QR hàng loạt ---
 builder.Services.AddRateLimiter(o =>
@@ -91,14 +117,22 @@ using (var scope = app.Services.CreateScope())
     await DbSeeder.SeedAsync(
         scope.ServiceProvider.GetRequiredService<EduHubDbContext>(),
         scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>(),
-        scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>());
+        scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>(),
+        app.Environment.IsDevelopment());
 }
 
-// TODO 5.2: khi KHÔNG phải môi trường Development: app.UseHsts() và app.UseHttpsRedirection()
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+else
+{
+    app.UseHsts();
+    app.UseHttpsRedirection();
+}
 
-app.UseSwagger();
-app.UseSwaggerUI();
-// TODO 5.3: app.UseCors("EduHubWeb");   // đặt trước Authentication
+app.UseCors("EduHubWeb");
 app.UseAuthentication();   // phải đứng TRƯỚC UseAuthorization
 app.UseRateLimiter();      // đặt sau Authentication để giới hạn theo từng người dùng
 app.UseAuthorization();
