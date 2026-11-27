@@ -1,0 +1,41 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EduHub.Domain", "EduHub.Domain\EduHub.Domain.csproj", "{61111111-6111-6111-6111-611111111111}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EduHub.Application", "EduHub.Application\EduHub.Application.csproj", "{62222222-6222-6222-6222-622222222222}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EduHub.Infrastructure", "EduHub.Infrastructure\EduHub.Infrastructure.csproj", "{63333333-6333-6333-6333-633333333333}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EduHub.API", "EduHub.API\EduHub.API.csproj", "{64444444-6444-6444-6444-644444444444}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EduHub.Tests", "EduHub.Tests\EduHub.Tests.csproj", "{65555555-6555-6555-6555-655555555555}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{61111111-6111-6111-6111-611111111111}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61111111-6111-6111-6111-611111111111}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61111111-6111-6111-6111-611111111111}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61111111-6111-6111-6111-611111111111}.Release|Any CPU.Build.0 = Release|Any CPU
+		{62222222-6222-6222-6222-622222222222}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62222222-6222-6222-6222-622222222222}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62222222-6222-6222-6222-622222222222}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62222222-6222-6222-6222-622222222222}.Release|Any CPU.Build.0 = Release|Any CPU
+		{63333333-6333-6333-6333-633333333333}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63333333-6333-6333-6333-633333333333}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63333333-6333-6333-6333-633333333333}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63333333-6333-6333-6333-633333333333}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64444444-6444-6444-6444-644444444444}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64444444-6444-6444-6444-644444444444}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64444444-6444-6444-6444-644444444444}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64444444-6444-6444-6444-644444444444}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65555555-6555-6555-6555-655555555555}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65555555-6555-6555-6555-655555555555}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65555555-6555-6555-6555-655555555555}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65555555-6555-6555-6555-655555555555}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
