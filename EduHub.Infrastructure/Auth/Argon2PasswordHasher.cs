@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using EduHub.Application.Auth;
 using Konscious.Security.Cryptography;
 
@@ -15,23 +17,34 @@ public class Argon2PasswordHasher : IPasswordHasher
     /// <summary>Trả về base64(salt) + ":" + base64(hash).</summary>
     public string Hash(string password)
     {
-        // TODO 1.1: sinh salt 16 byte bằng RandomNumberGenerator
-        // TODO 1.2: gọi Compute(password, salt) rồi ghép chuỗi base64(salt):base64(hash)
-        throw new NotImplementedException();
+        var salt = RandomNumberGenerator.GetBytes(SaltSize);
+        return $"{Convert.ToBase64String(salt)}:{Convert.ToBase64String(Compute(password, salt))}";
     }
 
     public bool Verify(string password, string hash)
     {
-        // TODO 1.3: tách chuỗi hash thành salt và hash đã lưu (sai định dạng thì trả false)
-        // TODO 1.4: băm lại mật khẩu với CÙNG salt
-        // TODO 1.5: so sánh bằng CryptographicOperations.FixedTimeEquals (chống timing attack)
-        throw new NotImplementedException();
+        var parts = hash.Split(':');
+        if (parts.Length != 2)
+            return false;
+
+        var salt = new byte[SaltSize];
+        Span<byte> expected = stackalloc byte[HashSize];
+        if (!Convert.TryFromBase64String(parts[0], salt, out var saltLength) || saltLength != SaltSize ||
+            !Convert.TryFromBase64String(parts[1], expected, out var hashLength) || hashLength != HashSize)
+            return false;
+
+        return CryptographicOperations.FixedTimeEquals(Compute(password, salt), expected);
     }
 
     private static byte[] Compute(string password, byte[] salt)
     {
-        // TODO 1.6: dùng new Argon2id(Encoding.UTF8.GetBytes(password)) với Salt, MemorySize,
-        //           Iterations, DegreeOfParallelism theo các hằng số ở trên; trả argon2.GetBytes(HashSize)
-        throw new NotImplementedException();
+        using var argon2 = new Argon2id(Encoding.UTF8.GetBytes(password))
+        {
+            Salt = salt,
+            MemorySize = MemorySizeKb,
+            Iterations = Iterations,
+            DegreeOfParallelism = Parallelism
+        };
+        return argon2.GetBytes(HashSize);
     }
 }
