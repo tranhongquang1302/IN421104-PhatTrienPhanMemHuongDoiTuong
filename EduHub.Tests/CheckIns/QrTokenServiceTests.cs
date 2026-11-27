@@ -10,27 +10,53 @@ public class QrTokenServiceTests
 {
     private readonly ManualClock _clock = new(new DateTimeOffset(2026, 10, 12, 8, 0, 0, TimeSpan.Zero));
 
-    // Gợi ý tạo service: new QrTokenService(config, _clock) với config từ
-    // new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["QrSettings:Secret"] = "..." }).Build()
-
     [Fact]
     public void Validate_FreshToken_IsValidAndReturnsEventId()
     {
-        // TODO 6.7: Generate(eventId) rồi Validate => QrValidation.Valid và eventId khớp
-        throw new NotImplementedException();
+        var service = CreateService();
+        var eventId = Guid.NewGuid();
+        var qr = service.Generate(eventId);
+
+        Assert.Equal(QrValidation.Valid, service.Validate(qr.Payload, out var foundEventId));
+        Assert.Equal(eventId, foundEventId);
+        Assert.Equal(_clock.GetUtcNow().UtcDateTime.AddMinutes(15), qr.ExpiresAt);
     }
 
     [Fact]
     public void Validate_After15Minutes_IsExpired()
     {
-        // TODO 6.8: _clock.Advance(TimeSpan.FromMinutes(15) + TimeSpan.FromSeconds(1)) => QrValidation.Expired
-        throw new NotImplementedException();
+        var service = CreateService();
+        var qr = service.Generate(Guid.NewGuid());
+        _clock.Advance(TimeSpan.FromMinutes(15) - TimeSpan.FromSeconds(1));
+        Assert.Equal(QrValidation.Valid, service.Validate(qr.Payload, out _));
+
+        _clock.Advance(TimeSpan.FromSeconds(1));
+        Assert.Equal(QrValidation.Expired, service.Validate(qr.Payload, out _));
+        _clock.Advance(TimeSpan.FromSeconds(1));
+        Assert.Equal(QrValidation.Expired, service.Validate(qr.Payload, out _));
     }
 
     [Fact]
     public void Validate_TamperedBody_IsInvalid()
     {
-        // TODO 6.9: ghép phần nội dung của QR này với chữ ký của QR khác => QrValidation.Invalid
-        throw new NotImplementedException();
+        var service = CreateService();
+        var first = service.Generate(Guid.NewGuid()).Payload.Split('.');
+        var second = service.Generate(Guid.NewGuid()).Payload.Split('.');
+
+        Assert.Equal(QrValidation.Invalid, service.Validate($"{first[0]}.{second[1]}", out _));
     }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("bad!payload")]
+    [InlineData("a.b.c")]
+    [InlineData("abc.!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")]
+    public void Validate_MalformedPayload_IsInvalid(string payload) =>
+        Assert.Equal(QrValidation.Invalid, CreateService().Validate(payload, out _));
+
+    private QrTokenService CreateService() => new(
+        new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["QrSettings:Secret"] = "unit-test-qr-placeholder-key-32-bytes"
+        }).Build(), _clock);
 }
