@@ -1,0 +1,30 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: EduHub.API/Dockerfile
+    ports:
+      - "8080:8080"
+    # TODO (Nhiệm vụ 4): đọc biến môi trường từ file .env (env_file hoặc cú pháp ${DB_PASSWORD})
+    #                    thay vì ghi mật khẩu thẳng vào file này.
+    #                    API cần JwtSettings__Secret (>= 32 ký tự), lấy từ .env như DB_PASSWORD.
+    environment:
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=eduhub;Username=postgres;Password=secret"
+      JwtSettings__Secret: "${JwtSettings__Secret:-}"
+    # TODO (Nhiệm vụ 4): thêm healthcheck cho api (gọi /healthz)
+    #                    và depends_on postgres với condition: service_healthy
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: eduhub
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # TODO (Nhiệm vụ 4): thêm healthcheck dùng pg_isready
+
+volumes:
+  postgres_data:

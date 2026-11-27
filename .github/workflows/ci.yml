@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - run: dotnet restore EduHub.sln
+      - run: dotnet build EduHub.sln --no-restore -c Release
+      - run: >-
+          dotnet test EduHub.sln --no-build -c Release
+          --collect:"XPlat Code Coverage" --results-directory ./coverage
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: '**/coverage.cobertura.xml'
+
+  # TODO (Nhiệm vụ 5): thêm job push-image
+  #   - needs: build-test (chỉ chạy khi test đạt)
+  #   - if: chỉ chạy khi push lên nhánh main
+  #   - permissions: packages: write
+  #   - các bước: docker/login-action (ghcr.io, dùng secrets.GITHUB_TOKEN)
+  #               rồi docker/build-push-action (file EduHub.API/Dockerfile, push: true)
