@@ -8,6 +8,8 @@ namespace EduHub.Infrastructure.Persistence;
 public class EduHubDbContext(DbContextOptions<EduHubDbContext> options)
     : IdentityDbContext<AppUser, AppRole, Guid>(options)
 {
+    internal const string UniqueCheckInIndex = "IX_checkins_RegistrationId";
+
     public DbSet<Club> Clubs => Set<Club>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<Registration> Registrations => Set<Registration>();
@@ -51,7 +53,7 @@ public class EduHubDbContext(DbContextOptions<EduHubDbContext> options)
             b.HasKey(x => x.Id);
             b.HasOne<Registration>().WithMany().HasForeignKey(x => x.RegistrationId).OnDelete(DeleteBehavior.Cascade);
             // Mỗi đăng ký chỉ check-in 1 lần — chặn trùng ở cả mức DB
-            b.HasIndex(x => x.RegistrationId).IsUnique();
+            b.HasIndex(x => x.RegistrationId).HasDatabaseName(UniqueCheckInIndex).IsUnique();
         });
 
         modelBuilder.Entity<RefreshToken>(b =>

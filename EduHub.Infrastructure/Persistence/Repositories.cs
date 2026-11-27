@@ -100,9 +100,19 @@ public class CheckInRepository(EduHubDbContext db) : ICheckInRepository
     public Task<bool> CheckInExistsAsync(Guid registrationId, CancellationToken ct = default) =>
         db.CheckIns.AnyAsync(c => c.RegistrationId == registrationId, ct);
 
-    public async Task AddAsync(CheckIn checkIn, CancellationToken ct = default)
+    public async Task<bool> TryAddAsync(CheckIn checkIn, CancellationToken ct = default)
     {
         db.CheckIns.Add(checkIn);
-        await db.SaveChangesAsync(ct);
+        try
+        {
+            await db.SaveChangesAsync(ct);
+            return true;
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException
+            { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: EduHubDbContext.UniqueCheckInIndex })
+        {
+            db.Entry(checkIn).State = EntityState.Detached;
+            return false;
+        }
     }
 }

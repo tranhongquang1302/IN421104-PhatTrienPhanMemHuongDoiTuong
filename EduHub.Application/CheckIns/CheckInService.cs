@@ -20,7 +20,7 @@ public interface ICheckInRepository
     Task<bool> EventExistsAsync(Guid eventId, CancellationToken ct = default);
     Task<Registration?> FindRegistrationAsync(Guid memberId, Guid eventId, CancellationToken ct = default);
     Task<bool> CheckInExistsAsync(Guid registrationId, CancellationToken ct = default);
-    Task AddAsync(CheckIn checkIn, CancellationToken ct = default);
+    Task<bool> TryAddAsync(CheckIn checkIn, CancellationToken ct = default);
 }
 
 public enum CheckInOutcome { Success, EventNotFound, InvalidQr, ExpiredQr, NotRegistered, AlreadyCheckedIn }
@@ -33,11 +33,26 @@ public class CheckInService(IQrTokenService qr, ICheckInRepository repo, TimePro
 
     public async Task<CheckInResult> CheckInAsync(Guid memberId, Guid eventId, string qrPayload, CancellationToken ct = default)
     {
-        // TODO 4.7: sự kiện không tồn tại => EventNotFound
-        // TODO 4.8: qr.Validate(...): Expired => ExpiredQr; không Valid HOẶC eventId trong QR khác eventId đang check-in => InvalidQr
-        // TODO 4.9: tìm đăng ký của member; không có hoặc đã Cancelled => NotRegistered
-        // TODO 4.10: đã check-in rồi => AlreadyCheckedIn
-        // TODO 4.11: tạo CheckIn.CreateForRegistration(reg.Id), gọi Verify(clock.GetUtcNow().UtcDateTime), lưu, trả Success
-        throw new NotImplementedException();
+        if (!await repo.EventExistsAsync(eventId, ct))
+            return new(CheckInOutcome.EventNotFound);
+
+        var validation = qr.Validate(qrPayload, out var qrEventId);
+        if (validation == QrValidation.Expired)
+            return new(CheckInOutcome.ExpiredQr);
+        if (validation != QrValidation.Valid || qrEventId != eventId)
+            return new(CheckInOutcome.InvalidQr);
+
+        var registration = await repo.FindRegistrationAsync(memberId, eventId, ct);
+        if (registration is null || registration.Status == "Cancelled")
+            return new(CheckInOutcome.NotRegistered);
+        if (await repo.CheckInExistsAsync(registration.Id, ct))
+            return new(CheckInOutcome.AlreadyCheckedIn);
+
+        var checkIn = CheckIn.CreateForRegistration(registration.Id);
+        checkIn.Verify(clock.GetUtcNow().UtcDateTime);
+        if (!await repo.TryAddAsync(checkIn, ct))
+            return new(CheckInOutcome.AlreadyCheckedIn);
+
+        return new(CheckInOutcome.Success, checkIn.CheckedInAt);
     }
 }
