@@ -37,15 +37,34 @@ public class AccountRepository(UserManager<AppUser> users) : IAccountRepository
 
 public class RefreshTokenStore(EduHubDbContext db) : IRefreshTokenStore
 {
-    public Task<RefreshToken?> FindByHashAsync(string tokenHash, CancellationToken ct = default) =>
-        db.RefreshTokens.FirstOrDefaultAsync(t => t.TokenHash == tokenHash, ct);
+    public async Task<TResult> WithTokenAsync<TResult>(
+        string tokenHash, Func<RefreshToken?, Task<TResult>> action, CancellationToken ct = default)
+    {
+        var userId = await db.RefreshTokens
+            .Where(t => t.TokenHash == tokenHash)
+            .Select(t => (Guid?)t.UserId)
+            .FirstOrDefaultAsync(ct);
+        if (userId is null)
+            return await action(null);
+
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        // Khóa theo tài khoản trước khi đọc token, để xoay vòng và thu hồi không chạy chồng nhau.
+        await db.Database.ExecuteSqlInterpolatedAsync(
+            $"""SELECT 1 FROM "AspNetUsers" WHERE "Id" = {userId.Value} FOR NO KEY UPDATE""", ct);
+        var token = await db.RefreshTokens.FirstOrDefaultAsync(t => t.TokenHash == tokenHash, ct);
+        var result = await action(token);
+        await transaction.CommitAsync(ct);
+        return result;
+    }
 
     public async Task AddAsync(RefreshToken token, CancellationToken ct = default) =>
         await db.RefreshTokens.AddAsync(token, ct);
 
     public async Task RevokeAllAsync(Guid userId, DateTime utcNow, CancellationToken ct = default)
     {
-        var active = await db.RefreshTokens.Where(t => t.UserId == userId && t.RevokedAt == null).ToListAsync(ct);
+        var active = await db.RefreshTokens
+            .Where(t => t.UserId == userId && t.RevokedAt == null && t.ExpiresAt > utcNow)
+            .ToListAsync(ct);
         foreach (var t in active) t.Revoke(utcNow);
     }
 

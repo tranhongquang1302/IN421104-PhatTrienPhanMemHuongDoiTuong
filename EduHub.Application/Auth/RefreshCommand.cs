@@ -13,18 +13,42 @@ public class RefreshCommandHandler(
 {
     public async Task<LoginResult> HandleAsync(RefreshCommand command, CancellationToken ct = default)
     {
-        // TODO 2.7: băm token nhận được (RefreshTokens.Hash) rồi tìm trong store; không thấy => UnauthorizedAccessException
-        // TODO 2.8: token ĐÃ BỊ THU HỒI mà vẫn được dùng lại => nghi bị đánh cắp:
-        //           store.RevokeAllAsync(userId, now) + SaveChangesAsync, rồi ném UnauthorizedAccessException
-        // TODO 2.9: token hết hạn => UnauthorizedAccessException
-        // TODO 2.10: tìm account theo stored.UserId; thu hồi token cũ (stored.Revoke(now));
-        //            phát cặp mới bằng LoginCommandHandler.IssueAsync(...)
-        throw new NotImplementedException();
+        var result = await store.WithTokenAsync<LoginResult?>(RefreshTokens.Hash(command.RefreshToken), async stored =>
+        {
+            if (stored is null)
+                return null;
+
+            var now = clock.GetUtcNow().UtcDateTime;
+            if (stored.IsRevoked)
+            {
+                await store.RevokeAllAsync(stored.UserId, now, ct);
+                await store.SaveChangesAsync(ct);
+                return null;
+            }
+
+            if (stored.IsExpired(now))
+                return null;
+
+            var account = await accounts.FindByIdAsync(stored.UserId, ct);
+            if (account is null)
+                return null;
+
+            stored.Revoke(now);
+            return await LoginCommandHandler.IssueAsync(account, tokens, store, clock, ct);
+        }, ct);
+
+        // Trả lỗi sau khi giao dịch đã lưu việc thu hồi do token bị dùng lại.
+        return result ?? throw new UnauthorizedAccessException("Refresh token không hợp lệ.");
     }
 
-    public async Task LogoutAsync(RefreshCommand command, CancellationToken ct = default)
-    {
-        // TODO 2.11: tìm token theo bản băm; có thì Revoke + SaveChanges; không có cũng KHÔNG báo lỗi
-        throw new NotImplementedException();
-    }
+    public Task LogoutAsync(RefreshCommand command, CancellationToken ct = default) =>
+        store.WithTokenAsync(RefreshTokens.Hash(command.RefreshToken), async stored =>
+        {
+            if (stored is null || stored.IsRevoked)
+                return false;
+
+            stored.Revoke(clock.GetUtcNow().UtcDateTime);
+            await store.SaveChangesAsync(ct);
+            return true;
+        }, ct);
 }

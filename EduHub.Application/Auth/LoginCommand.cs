@@ -30,22 +30,23 @@ public class LoginCommandHandler(
 {
     public async Task<LoginResult> HandleAsync(LoginCommand command, CancellationToken ct = default)
     {
-        // TODO 2.4: tìm account theo email (Trim + ToLowerInvariant)
-        // TODO 2.5: email không có HOẶC sai mật khẩu => ném UnauthorizedAccessException với CÙNG một thông điệp
-        //           (để kẻ tấn công không dò ra email nào tồn tại)
-        // TODO 2.6: gọi IssueAsync(...) để phát cặp access + refresh token
-        throw new NotImplementedException();
+        var account = await accounts.FindByEmailAsync(command.Email.Trim().ToLowerInvariant(), ct);
+        if (account is null || !hasher.Verify(command.Password, account.PasswordHash))
+            throw new UnauthorizedAccessException("Email hoặc mật khẩu không đúng.");
+
+        return await IssueAsync(account, tokens, refreshTokens, clock, ct);
     }
 
-    /// <summary>Phát cặp token: tạo refresh token, lưu BẢN BĂM, trả cả access token (đã viết sẵn).</summary>
+    /// <summary>Phát cặp token và chỉ lưu bản băm của refresh token.</summary>
     internal static async Task<LoginResult> IssueAsync(
         Account account, ITokenService tokens, IRefreshTokenStore store, TimeProvider clock, CancellationToken ct)
     {
+        var accessToken = tokens.GenerateAccessToken(account);
         var raw = RefreshTokens.NewToken();
         await store.AddAsync(
             RefreshToken.Create(account.Id, RefreshTokens.Hash(raw), clock.GetUtcNow().UtcDateTime,
                 TimeSpan.FromDays(tokens.RefreshTokenDays)), ct);
         await store.SaveChangesAsync(ct);
-        return new LoginResult(tokens.GenerateAccessToken(account), raw, tokens.ExpiresInSeconds);
+        return new LoginResult(accessToken, raw, tokens.ExpiresInSeconds);
     }
 }

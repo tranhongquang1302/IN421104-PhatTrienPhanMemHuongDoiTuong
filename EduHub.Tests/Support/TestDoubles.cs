@@ -15,10 +15,22 @@ public class ManualClock(DateTimeOffset start) : TimeProvider
 /// <summary>Kho refresh token trong bộ nhớ, thay cho DB.</summary>
 public class InMemoryRefreshTokenStore : IRefreshTokenStore
 {
+    private readonly SemaphoreSlim _refreshLock = new(1);
     public List<RefreshToken> Tokens { get; } = [];
 
-    public Task<RefreshToken?> FindByHashAsync(string tokenHash, CancellationToken ct = default) =>
-        Task.FromResult(Tokens.FirstOrDefault(t => t.TokenHash == tokenHash));
+    public async Task<TResult> WithTokenAsync<TResult>(
+        string tokenHash, Func<RefreshToken?, Task<TResult>> action, CancellationToken ct = default)
+    {
+        await _refreshLock.WaitAsync(ct);
+        try
+        {
+            return await action(Tokens.SingleOrDefault(t => t.TokenHash == tokenHash));
+        }
+        finally
+        {
+            _refreshLock.Release();
+        }
+    }
 
     public Task AddAsync(RefreshToken token, CancellationToken ct = default)
     {
@@ -28,7 +40,7 @@ public class InMemoryRefreshTokenStore : IRefreshTokenStore
 
     public Task RevokeAllAsync(Guid userId, DateTime utcNow, CancellationToken ct = default)
     {
-        foreach (var t in Tokens.Where(t => t.UserId == userId)) t.Revoke(utcNow);
+        foreach (var t in Tokens.Where(t => t.UserId == userId && t.IsActive(utcNow))) t.Revoke(utcNow);
         return Task.CompletedTask;
     }
 

@@ -22,7 +22,9 @@ public interface ITokenService
 /// <summary>Kho lưu refresh token (chỉ lưu bản băm).</summary>
 public interface IRefreshTokenStore
 {
-    Task<RefreshToken?> FindByHashAsync(string tokenHash, CancellationToken ct = default);
+    /// <summary>Thực hiện một thao tác với token trong giao dịch tuần tự theo người dùng.</summary>
+    Task<TResult> WithTokenAsync<TResult>(
+        string tokenHash, Func<RefreshToken?, Task<TResult>> action, CancellationToken ct = default);
     Task AddAsync(RefreshToken token, CancellationToken ct = default);
     /// <summary>Thu hồi mọi refresh token còn hiệu lực của một người dùng.</summary>
     Task RevokeAllAsync(Guid userId, DateTime utcNow, CancellationToken ct = default);

@@ -28,9 +28,14 @@ public class AuthController(
     [EnableRateLimiting("auth")]   // chống dò mật khẩu: tối đa 10 lần/phút/IP
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
-        // TODO 2.12: gọi login.HandleAsync(new LoginCommand(...)); trả Ok(kết quả);
-        //            bắt UnauthorizedAccessException => Unauthorized(new { error = ex.Message })
-        throw new NotImplementedException();
+        try
+        {
+            return Ok(await login.HandleAsync(new LoginCommand(request.Email, request.Password), ct));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { error = ex.Message });
+        }
     }
 
     /// <summary>Đổi refresh token lấy cặp token mới. Refresh token cũ hết tác dụng.</summary>
@@ -38,8 +43,14 @@ public class AuthController(
     [EnableRateLimiting("auth")]
     public async Task<IActionResult> Refresh([FromBody] RefreshRequest request, CancellationToken ct)
     {
-        // TODO 2.13: tương tự Login, nhưng gọi refresh.HandleAsync(new RefreshCommand(...))
-        throw new NotImplementedException();
+        try
+        {
+            return Ok(await refresh.HandleAsync(new RefreshCommand(request.RefreshToken), ct));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { error = ex.Message });
+        }
     }
 
     /// <summary>Đăng xuất: thu hồi refresh token.</summary>
