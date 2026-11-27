@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Starter còn nhiều TODO nên nhiều tham số constructor chưa dùng tới; sẽ hết sau khi bạn hoàn thành -->
+    <NoWarn>$(NoWarn);CS9113</NoWarn>
+  </PropertyGroup>
+</Project>
