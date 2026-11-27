@@ -2,6 +2,8 @@ namespace EduHub.Domain.Entities;
 
 public class Registration
 {
+    public const string CancelledStatus = "Cancelled";
+
     public Guid Id { get; private set; } = Guid.NewGuid();
     public Guid MemberId { get; set; }
     public Guid EventId { get; set; }
@@ -13,6 +15,6 @@ public class Registration
     public static Registration Create(Guid memberId, Guid eventId) =>
         new() { MemberId = memberId, EventId = eventId };
 
-    public void Cancel() => Status = "Cancelled";
+    public void Cancel() => Status = CancelledStatus;
     public void Confirm() => Status = "Confirmed";
 }

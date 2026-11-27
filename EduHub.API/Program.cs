@@ -31,6 +31,9 @@ builder.Services.AddScoped<IRegistrationRepository, EfRegistrationRepository>();
 builder.Services.AddScoped<ClubService>();
 builder.Services.AddScoped<EventService>();
 builder.Services.AddScoped<GetEventsQueryHandler>();
+builder.Services.AddScoped<RegisterForEventCommandHandler>();
+builder.Services.AddScoped<GetEventRegistrationsQueryHandler>();
+builder.Services.AddScoped<CancelRegistrationCommandHandler>();
 
 var app = builder.Build();
 

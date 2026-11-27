@@ -11,7 +11,7 @@ public class EfRegistrationRepository(EduHubDbContext db) : IRegistrationReposit
         => db.Members.AnyAsync(m => m.Id == memberId, ct);
 
     public Task<int> CountActiveByEventIdAsync(Guid eventId, CancellationToken ct = default)
-        => db.Registrations.CountAsync(r => r.EventId == eventId && r.Status != "Cancelled", ct);
+        => db.Registrations.CountAsync(r => r.EventId == eventId && r.Status != Registration.CancelledStatus, ct);
 
     public Task<bool> ExistsAsync(Guid memberId, Guid eventId, CancellationToken ct = default)
         => db.Registrations.AnyAsync(r => r.MemberId == memberId && r.EventId == eventId, ct);
