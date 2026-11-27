@@ -13,8 +13,8 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
           dotnet-version: '10.0.x'
 
@@ -36,13 +36,14 @@ jobs:
           from xml.etree import ElementTree
 
           report, = Path("coverage").rglob("coverage.cobertura.xml")
-          coverage = float(ElementTree.parse(report).getroot().attrib["line-rate"])
+          counts = ElementTree.parse(report).getroot().attrib
+          coverage = int(counts["lines-covered"]) / int(counts["lines-valid"])
           print(f"Line coverage: {coverage:.2%}")
           if coverage < 0.50:
               raise SystemExit("Line coverage must be at least 50%.")
           PY
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
         with:
           name: coverage-report
@@ -52,7 +53,7 @@ jobs:
     needs: build-test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Build and start API and PostgreSQL
         run: |
@@ -63,6 +64,7 @@ jobs:
         run: |
           docker compose ps
           curl --fail --silent --show-error http://127.0.0.1:8080/healthz
+          echo
           clubs=$(docker compose exec -T postgres psql -U postgres -d eduhub -Atc 'SELECT count(*) FROM clubs')
           test "$clubs" -gt 0
           bytes=$(docker image inspect eduhub-api:local --format '{{.Size}}')
@@ -81,11 +83,11 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -93,7 +95,7 @@ jobs:
 
       - name: Generate image tags
         id: image
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
@@ -101,7 +103,7 @@ jobs:
             type=sha,format=long
 
       - name: Build and push the API image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: EduHub.API/Dockerfile
