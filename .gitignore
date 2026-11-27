@@ -1,0 +1,9 @@
+bin/
+obj/
+.idea/
+.vs/
+*.user
+TestResults/
+coverage/
+.env
+.DS_Store
