@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using EduHub.Application.Abstractions;
 using EduHub.Application.Auth;
 using Microsoft.AspNetCore.Authorization;
@@ -73,6 +74,7 @@ public class AuthController(
     });
 }
 
-public record RegisterRequest(string Email, string DisplayName, string Password);
+public record RegisterRequest([EmailAddress, StringLength(256)] string Email,
+    [Required, StringLength(200)] string DisplayName, string Password);
 public record LoginRequest(string Email, string Password);
 public record RefreshRequest(string RefreshToken);

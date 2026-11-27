@@ -11,7 +11,7 @@ namespace EduHub.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-// TODO 3.6: thêm [Authorize] ở đây
+[Authorize]
 public class EventsController(EduHubDbContext db, CheckInService checkIns) : ControllerBase
 {
     private Guid CurrentMemberId => Guid.Parse(User.FindFirst("sub")!.Value);
@@ -21,7 +21,7 @@ public class EventsController(EduHubDbContext db, CheckInService checkIns) : Con
         Ok(await db.Events.Select(e => new { e.Id, e.Name, e.ClubId, e.StartTime, e.Capacity }).ToListAsync(ct));
 
     [HttpDelete("{id:guid}")]
-    // TODO 3.7: chỉ Admin được xoá sự kiện: [Authorize(Policy = Policies.AdminOnly)]
+    [Authorize(Policy = Policies.AdminOnly)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         var ev = await db.Events.FindAsync([id], ct);
@@ -49,7 +49,7 @@ public class EventsController(EduHubDbContext db, CheckInService checkIns) : Con
 
     /// <summary>Admin (hoặc người có claim qr.issue) tạo QR hạn 15 phút cho sự kiện.</summary>
     [HttpPost("{id:guid}/generate-qr")]
-    // TODO 3.9: dùng policy CanIssueQr: [Authorize(Policy = Policies.CanIssueQr)]
+    [Authorize(Policy = Policies.CanIssueQr)]
     public async Task<IActionResult> GenerateQr(Guid id, CancellationToken ct)
     {
         if (!await db.Events.AnyAsync(e => e.Id == id, ct)) return NotFound();

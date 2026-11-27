@@ -9,7 +9,7 @@ namespace EduHub.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-// TODO 3.6: thêm [Authorize] ở đây (phải đăng nhập mới được gọi mọi action; thiếu token -> 401)
+[Authorize]
 public class ClubsController(EduHubDbContext db) : ControllerBase
 {
     [HttpGet]
@@ -17,7 +17,7 @@ public class ClubsController(EduHubDbContext db) : ControllerBase
         Ok(await db.Clubs.Select(c => new { c.Id, c.Name, c.Description }).ToListAsync(ct));
 
     [HttpPost]
-    // TODO 3.7: chỉ Admin được tạo CLB: [Authorize(Policy = Policies.AdminOnly)]
+    [Authorize(Policy = Policies.AdminOnly)]
     public async Task<IActionResult> Create([FromBody] CreateClubRequest req, CancellationToken ct)
     {
         var club = Club.Create(req.Name, req.Description ?? "");
@@ -27,7 +27,7 @@ public class ClubsController(EduHubDbContext db) : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    // TODO 3.8: chỉ Admin được xoá CLB (Member -> 403): [Authorize(Policy = Policies.AdminOnly)]
+    [Authorize(Policy = Policies.AdminOnly)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         var club = await db.Clubs.FindAsync([id], ct);

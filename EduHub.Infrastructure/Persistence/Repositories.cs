@@ -4,11 +4,12 @@ using EduHub.Application.CheckIns;
 using EduHub.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace EduHub.Infrastructure.Persistence;
 
 /// <summary>Đọc/tạo người dùng qua UserManager của ASP.NET Core Identity.</summary>
-public class AccountRepository(UserManager<AppUser> users) : IAccountRepository
+public class AccountRepository(UserManager<AppUser> users, EduHubDbContext db) : IAccountRepository
 {
     public async Task<Account?> FindByEmailAsync(string email, CancellationToken ct = default) =>
         await ToAccountAsync(await users.FindByEmailAsync(email));
@@ -19,11 +20,28 @@ public class AccountRepository(UserManager<AppUser> users) : IAccountRepository
     public async Task<RegisterResult> CreateMemberAsync(
         string email, string displayName, string password, CancellationToken ct = default)
     {
-        // TODO 3.1: tạo AppUser (UserName = Email = email chuẩn hoá chữ thường, DisplayName)
-        // TODO 3.2: users.CreateAsync(user, password) — Identity kiểm tra độ mạnh mật khẩu + trùng email,
-        //           và gọi hasher Argon2id để băm. Thất bại => RegisterResult(null, danh sách lỗi)
-        // TODO 3.3: users.AddToRoleAsync(user, Roles.Member); trả RegisterResult(account, [])
-        throw new NotImplementedException();
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var user = new AppUser { UserName = normalizedEmail, Email = normalizedEmail, DisplayName = displayName.Trim() };
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            var result = await users.CreateAsync(user, password);
+            if (!result.Succeeded)
+                return new(null, result.Errors.Select(e => e.Description).ToArray());
+
+            result = await users.AddToRoleAsync(user, Roles.Member);
+            if (!result.Succeeded)
+                return new(null, result.Errors.Select(e => e.Description).ToArray());
+
+            var account = await ToAccountAsync(user);
+            await transaction.CommitAsync(ct);
+            return new(account, []);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException
+            { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "UserNameIndex" })
+        {
+            return new(null, ["Email đã được đăng ký."]);
+        }
     }
 
     private async Task<Account?> ToAccountAsync(AppUser? user)

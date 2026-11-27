@@ -11,7 +11,8 @@ public static class Policies
 
     public static void Configure(AuthorizationOptions options)
     {
-        // TODO 3.4: policy AdminOnly = chỉ người có role Admin (p.RequireRole)
-        // TODO 3.5: policy CanIssueQr = role Admin HOẶC có claim permission = qr.issue (p.RequireAssertion)
+        options.AddPolicy(AdminOnly, p => p.RequireRole(Roles.Admin));
+        options.AddPolicy(CanIssueQr, p => p.RequireAuthenticatedUser().RequireAssertion(context =>
+            context.User.IsInRole(Roles.Admin) || context.User.HasClaim(AppClaims.Permission, AppClaims.QrIssue)));
     }
 }
