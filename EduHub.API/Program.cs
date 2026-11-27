@@ -34,6 +34,7 @@ builder.Services.AddScoped<GetEventsQueryHandler>();
 builder.Services.AddScoped<RegisterForEventCommandHandler>();
 builder.Services.AddScoped<GetEventRegistrationsQueryHandler>();
 builder.Services.AddScoped<CancelRegistrationCommandHandler>();
+builder.Services.AddScoped<IEventReportQuery, DapperEventReportQuery>();
 
 var app = builder.Build();
 
