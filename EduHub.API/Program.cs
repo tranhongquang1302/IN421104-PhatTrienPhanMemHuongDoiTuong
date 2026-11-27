@@ -28,6 +28,9 @@ builder.Services.AddScoped<IUnitOfWork, EfUnitOfWork>();
 builder.Services.AddScoped<IClubRepository, EfClubRepository>();
 builder.Services.AddScoped<IEventRepository, EfEventRepository>();
 builder.Services.AddScoped<IRegistrationRepository, EfRegistrationRepository>();
+builder.Services.AddScoped<ClubService>();
+builder.Services.AddScoped<EventService>();
+builder.Services.AddScoped<GetEventsQueryHandler>();
 
 var app = builder.Build();
 

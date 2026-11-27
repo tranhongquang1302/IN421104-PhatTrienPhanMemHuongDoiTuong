@@ -10,12 +10,12 @@ public record SaveClubCommand(string Name, string? Description);
 
 public class ClubService(IClubRepository clubs, IUnitOfWork uow)
 {
-    public Task<PagedResult<ClubDto>> SearchAsync(SearchClubsQuery q, CancellationToken ct = default)
+    public async Task<PagedResult<ClubDto>> SearchAsync(SearchClubsQuery q, CancellationToken ct = default)
     {
-        // TODO [Nhiệm vụ 3] Chuẩn hóa phân trang bằng PageRequest.Of(q.Page, q.PageSize),
-        //  gọi clubs.SearchAsync(q.Search, paging.Skip, paging.PageSize, ct),
-        //  map từng Club sang ClubDto (c.ToDto()) rồi trả PagedResult<ClubDto>.
-        throw new NotImplementedException();
+        var page = PageRequest.Of(q.Page, q.PageSize);
+        var (clubsOnPage, totalCount) = await clubs.SearchAsync(q.Search, page.Skip, page.PageSize, ct);
+        return new PagedResult<ClubDto>(clubsOnPage.Select(club => club.ToDto()).ToList(),
+            totalCount, page.Page, page.PageSize);
     }
 
     public async Task<ClubDto> GetByIdAsync(Guid id, CancellationToken ct = default)
