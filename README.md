@@ -1,50 +1,55 @@
-# Bài tập Ch05 — Authentication và Security: JWT + QR Check-in (starter)
+# EduHub Ch05 — JWT và QR check-in
 
-Đề bài đầy đủ: `../de-bai.html`. Rubric: `../rubric.html`. Đánh giá HĐ1.3 (Bài tập chương), CLO2, CLO4, CLO5, CLO7.
+Bài tập HĐ1.3 của Trần Hồng Quang (MSSV 0024419387). Dự án dùng .NET 10, ASP.NET Core Identity và PostgreSQL.
 
-## Chạy thử
+## Chạy trên máy cục bộ
 
-```bash
-cd 02_Projects/ch05/starter
-docker compose up -d postgres            # PostgreSQL 16, DB "eduhub", mật khẩu mặc định "secret"
-dotnet build                             # starter build được ngay
-dotnet user-secrets set "JwtSettings:Secret" "chuoi-ngau-nhien-it-nhat-32-ky-tu-abcdef" --project EduHub.API
-dotnet test                              # 9 test đỏ cho đến khi bạn làm xong các TODO 6.x
-dotnet run --project EduHub.API          # mở /swagger
-```
+1. Sao chép `.env.example` thành `.env`, đặt `DB_PASSWORD` cho PostgreSQL và chạy `docker compose up -d postgres`. Nếu cổng 5432 đã được dùng, đặt thêm `DB_PORT` trong `.env` và dùng cùng cổng trong chuỗi kết nối.
+2. Từ thư mục chứa `EduHub.sln`, chạy các lệnh dưới đây. Thay mật khẩu bằng giá trị trong `.env` và dùng hai khóa ngẫu nhiên riêng biệt, mỗi khóa tối thiểu 32 byte.
 
-Có thể thay user-secrets bằng biến môi trường `JwtSettings__Secret` (xem `.env.example`).
-Không commit secret thật.
+   ```sh
+   dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=127.0.0.1;Port=5432;Database=eduhub;Username=postgres;Password=<DB_PASSWORD>" --project EduHub.API
+   dotnet user-secrets set "JwtSettings:Secret" "<khóa JWT ngẫu nhiên>" --project EduHub.API
+   dotnet user-secrets set "QrSettings:Secret" "<khóa QR ngẫu nhiên>" --project EduHub.API
+   dotnet build EduHub.sln
+   dotnet test EduHub.sln --no-build
+   dotnet run --project EduHub.API
+   ```
 
-## Danh sách TODO
+3. Mở [Swagger cục bộ](http://localhost:5050/swagger). Khi chạy Development với cơ sở dữ liệu mới, API tạo các tài khoản mẫu sau.
 
-Mỗi `// TODO x.y` trong mã nguồn thuộc một nhiệm vụ của đề bài. Tìm nhanh bằng cách tìm `TODO` trong thư mục.
-
-| Nhiệm vụ | TODO | Nằm ở |
+| Email | Mật khẩu mẫu | Quyền |
 |---|---|---|
-| 1. Argon2id | 1.1 đến 1.6 | `EduHub.Infrastructure/Auth/Argon2PasswordHasher.cs` |
-| | 1.7, 1.8 | `EduHub.API/Program.cs` (đăng ký hasher cho ứng dụng và cho Identity) |
-| 2. JWT access + refresh | 2.1 đến 2.3 | `EduHub.Infrastructure/Auth/JwtTokenService.cs` |
-| | 2.4 đến 2.6 | `EduHub.Application/Auth/LoginCommand.cs` |
-| | 2.7 đến 2.11 | `EduHub.Application/Auth/RefreshCommand.cs` |
-| | 2.12, 2.13 | `EduHub.API/Controllers/AuthController.cs` |
-| | 2.14 | `EduHub.API/Program.cs` (cấu hình JwtBearer) |
-| 3. Identity, role, claim, Policy | 3.1 đến 3.3 | `EduHub.Infrastructure/Persistence/Repositories.cs` |
-| | 3.4, 3.5 | `EduHub.API/Security/Policies.cs` |
-| | 3.6 đến 3.9 | `ClubsController.cs`, `EventsController.cs` |
-| | 3.10, 3.11 | `EduHub.API/Program.cs` (Identity, AddAuthorization) |
-| 4. QR check-in | 4.1 đến 4.6 | `EduHub.Infrastructure/Auth/QrTokenService.cs` |
-| | 4.7 đến 4.11 | `EduHub.Application/CheckIns/CheckInService.cs` |
-| 5. CORS, HTTPS, secret | 5.1 đến 5.3 | `EduHub.API/Program.cs` |
-| 6. Test | 6.1 đến 6.9 | `EduHub.Tests/` |
+| `admin@eduhub.local` | `Admin@123` | Admin |
+| `member@eduhub.local` | `Member@123` | Member |
+| `organizer@eduhub.local` | `Organizer@123` | Member có claim `permission=qr.issue` |
 
-## Đã viết sẵn (không cần sửa)
+Có thể tạo một khóa ngẫu nhiên bằng `openssl rand -base64 32`. Trên PowerShell 7 dùng `[Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))`.
 
-- Entity `Club`, `Event`, `Registration`, `CheckIn`, `RefreshToken`; `IdentityDbContext`, seed 3 tài khoản mẫu
-- `RefreshTokens.Hash` (băm SHA-256 refresh token), `IssueAsync` (phát cặp token), `IdentityArgon2Hasher` (cầu nối Argon2id cho Identity)
-- Rate limiting cho đăng nhập và check-in, Swagger có nút Authorize
-- Lớp hỗ trợ test: `ManualClock` (đồng hồ giả), `InMemoryRefreshTokenStore`, `TestAccounts`
+Ngoài Development, cung cấp cấu hình qua `ConnectionStrings__DefaultConnection`, `JwtSettings__Secret`, `QrSettings__Secret` và `Cors__AllowedOrigins__0` (thêm chỉ số cho các origin tiếp theo). API chuyển hướng HTTP sang HTTPS và gửi HSTS. Nếu HTTPS dùng cổng khác 443, đặt `ASPNETCORE_HTTPS_PORT` theo cổng đã cấu hình cho máy chủ.
 
-## Quy ước nộp bài
+## Endpoint và cách kiểm tra
 
-Nhánh `ch05/<MSSV>`, commit theo Conventional Commits viết bằng tiếng Anh, mở Pull Request về `main` và tag giảng viên.
+| Phương thức | Đường dẫn | Kết quả hoặc điều kiện |
+|---|---|---|
+| POST | `/api/auth/register` | `201` cho tài khoản Member. Mật khẩu yếu hoặc email trùng trả `400`. |
+| POST | `/api/auth/login` | `200` với cặp token khi đúng thông tin. Email hoặc mật khẩu sai đều trả `401` cùng thông điệp. |
+| POST | `/api/auth/refresh` | Gửi `{"refreshToken":"..."}` để đổi cặp token. Token hết hạn, đã thu hồi hoặc không hợp lệ trả `401`. |
+| POST | `/api/auth/logout` | Gửi `{"refreshToken":"..."}` để thu hồi token. Trả `204` cả khi gọi lại. |
+| GET | `/api/auth/me`, `/api/clubs`, `/api/events` | Gửi `Authorization: Bearer <accessToken>`. Thiếu token hoặc token sai trả `401`. |
+| POST, DELETE | `/api/clubs`, `/api/clubs/{id}` | `AdminOnly`. Member nhận `403`. |
+| DELETE | `/api/events/{id}` | `AdminOnly`. |
+| POST | `/api/events/{id}/register` | Đăng ký sự kiện cho tài khoản đang đăng nhập. |
+| POST | `/api/events/{id}/generate-qr` | `CanIssueQr`. Admin hoặc người có claim `permission=qr.issue` nhận `qrPayload` và `expiresAt`. |
+| POST | `/api/events/{id}/checkin` | Gửi `{"qrPayload":"..."}`. Trả `200` khi thành công, `400` khi QR sai hoặc hết hạn, `403` khi chưa đăng ký và `409` khi đã điểm danh. |
+
+Để thử luồng QR trên Swagger, đăng nhập bằng Organizer, dùng access token qua **Authorize** rồi lấy ID sự kiện và tạo QR. Đổi sang access token của Member, đăng ký cùng sự kiện và gửi payload QR hai lần. Lần đầu trả `200`, lần sau trả `409`.
+
+Để thử luồng refresh, đăng nhập và dùng refresh token A đổi lấy B. Gửi lại A để kiểm tra `401`, sau đó gửi B để kiểm tra các refresh token đang hoạt động của tài khoản đã bị thu hồi.
+
+## Cách triển khai
+
+- Identity dùng Argon2id cho mật khẩu mới với salt ngẫu nhiên 16 byte, 64 MiB bộ nhớ, 4 vòng lặp và 2 luồng. Kiểm tra mật khẩu bằng phép so sánh thời gian cố định.
+- JWT ký bằng HS256, kiểm tra chữ ký, issuer, audience và thời hạn. Access token mặc định có hạn 60 phút. Refresh token sống 7 ngày, được lưu dưới dạng bản băm SHA-256. Xoay vòng và thu hồi dùng giao dịch PostgreSQL theo tài khoản.
+- QR ký bằng HMAC-SHA256 và hết hạn sau 15 phút. Một QR áp dụng cho một sự kiện và mỗi thành viên đã đăng ký được điểm danh một lần. Ràng buộc duy nhất trong PostgreSQL bảo vệ cả khi hai yêu cầu đến đồng thời.
+- CORS chỉ cấp quyền cho các origin đã cấu hình, với `GET`, `POST`, `DELETE` và hai header `Authorization`, `Content-Type`. Rate limiter giới hạn 10 yêu cầu/phút/IP cho đăng ký, đăng nhập và refresh, cùng 20 yêu cầu/phút/tài khoản cho check-in. API gửi và nhận token qua JSON hoặc header Bearer. Nếu chuyển refresh token sang cookie, cần bảo vệ các endpoint dùng cookie trước CSRF.
