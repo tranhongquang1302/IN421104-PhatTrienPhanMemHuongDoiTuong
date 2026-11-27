@@ -24,10 +24,10 @@ builder.Services.AddSwaggerGen();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<EduHubDbContext>(options => options.UseNpgsql(connectionString));
 
-// TODO [Nhiệm vụ 2-5] Đăng ký DI (Scoped): IUnitOfWork -> EfUnitOfWork, IClubRepository -> EfClubRepository,
-//  IEventRepository -> EfEventRepository, IRegistrationRepository -> EfRegistrationRepository,
-//  IEventReportQuery -> DapperEventReportQuery, ClubService, EventService, GetEventsQueryHandler,
-//  RegisterForEventCommandHandler, GetEventRegistrationsQueryHandler, CancelRegistrationCommandHandler.
+builder.Services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+builder.Services.AddScoped<IClubRepository, EfClubRepository>();
+builder.Services.AddScoped<IEventRepository, EfEventRepository>();
+builder.Services.AddScoped<IRegistrationRepository, EfRegistrationRepository>();
 
 var app = builder.Build();
 
